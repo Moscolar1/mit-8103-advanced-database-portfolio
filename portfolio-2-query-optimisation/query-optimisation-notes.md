@@ -126,3 +126,60 @@ The experiment successfully created and verified an index on `members.join_date`
 The indexed run had a higher recorded execution time than the baseline run. This illustrates why query optimisation should be evaluated using execution plans and measurements rather than assuming that adding an index always improves performance.
 
 The experiment provided practical experience with PostgreSQL indexing, `EXPLAIN ANALYZE`, execution-plan interpretation, and performance evaluation.
+
+## 11. Additional Experiment: Optimising a Multi-Table JOIN Query
+
+### Objective
+
+This experiment investigated the execution plan of a query joining the `members`, `memberships`, and `membership_plans` tables. An index was created on the membership start date to investigate whether it affected query execution.
+
+### Baseline Query
+
+```sql
+EXPLAIN ANALYZE
+SELECT
+    m.member_id,
+    m.first_name,
+    m.last_name,
+    p.plan_name,
+    ms.start_date,
+    ms.end_date,
+    ms.membership_status
+FROM memberships AS ms
+JOIN members AS m
+    ON ms.member_id = m.member_id
+JOIN membership_plans AS p
+    ON ms.plan_id = p.plan_id
+ORDER BY ms.start_date DESC;
+```
+
+### Index Created
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_memberships_start_date
+ON memberships(start_date DESC);
+```
+
+The index was verified through PostgreSQL's `pg_indexes` catalogue and appeared in the results for the `memberships` table.
+
+### Observed Results
+
+| Measurement | Initial baseline | Later run with index present |
+|---|---:|---:|
+| Execution time | 0.875 ms | 5.13 ms |
+| Planning time | 0.231 ms | 10.8 ms |
+| Visible plan operators | Sort, Hash Join, Sequential Scan | Sort, Hash Join, Sequential Scan |
+
+A separate baseline rerun reported an execution time of 9.31 ms and planning time of 12.7 ms.
+
+### Discussion
+
+The index on `memberships.start_date` was successfully created and verified. However, the visible execution plan after indexing continued to show Sort, Hash Join, and Sequential Scan operators. The screenshot did not clearly show the new index being used by the query plan.
+
+The recorded execution and planning times varied between runs. Therefore, the measurements do not establish that the index improved or reduced overall performance. Database activity, caching, and other execution conditions may affect timings.
+
+PostgreSQL's query planner selects an execution strategy based on estimated costs. An index may exist without being selected when the planner estimates that another plan is more suitable.
+
+### Conclusion
+
+This experiment demonstrated how to inspect a multi-table JOIN query, create an index, verify its existence, and compare execution plans. The results show that creating an index does not guarantee that PostgreSQL will use it or that execution time will decrease. Further repeated testing under comparable conditions would be required for a stronger performance conclusion.
