@@ -159,7 +159,7 @@ The following transaction concepts have been demonstrated:
 2. **ROLLBACK:** Reverses uncommitted changes.
 3. **Verification:** Uses subsequent queries to confirm the resulting database state.
 
-**Next experiment:** Transaction Consistency and Constraint Enforcement. This will investigate how PostgreSQL constraints protect the integrity of data during database operations.
+
 ## Experiment 3: Transaction Consistency and Constraint Enforcement
 
 ### 1. Objective
