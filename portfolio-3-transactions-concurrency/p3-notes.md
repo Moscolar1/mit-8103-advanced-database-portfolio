@@ -271,3 +271,58 @@ The following screenshots document the experiment:
 The transaction consistency experiment was successful. PostgreSQL accepted and committed the valid membership plan but rejected the invalid insertion because its duration violated the `CHECK` constraint.
 
 The verification query returned one matching record, confirming that the valid plan was stored and the invalid plan was absent. This experiment demonstrates how constraint enforcement and transaction rollback help preserve database consistency.
+
+## Experiment 4: Transaction Isolation and Concurrent Transactions
+
+### 1. Objective
+
+The objective was to explore how PostgreSQL handles transactions in separate SQL Editor sessions when they access and update the same membership plan.
+
+### 2. Procedure
+
+The experiment was conducted in Neon PostgreSQL using two SQL Editor sessions.
+
+1. Created or verified the test plan `P3 Isolation Test Plan 2026`.
+2. Started a transaction in Session A using `BEGIN ISOLATION LEVEL READ COMMITTED`.
+3. Queried the test plan in Session A.
+4. Updated the plan's price to 3500.00 in Session B and executed `COMMIT`.
+5. Queried the test plan again in Session A.
+6. Attempted to commit Session A. Neon displayed a message indicating that no transaction was in progress.
+
+### 3. Results
+
+The screenshots confirm the following:
+
+| Item | Observed result |
+|---|---|
+| Test plan ID | 6 |
+| Test plan name | P3 Isolation Test Plan 2026 |
+| Price after Session B's update | 3500.00 |
+| Session B update | Successful |
+| Session B commit | Executed successfully |
+| Session A commit attempt | Neon reported that no transaction was in progress |
+
+The screenshots establish that the update to 3500.00 was committed. However, the evidence does not conclusively establish the price Session A observed before Session B committed or whether Session A's second read occurred within the same open transaction.
+
+### 4. Discussion
+
+The experiment demonstrated that a change to the test membership plan was successfully committed in Session B.
+
+PostgreSQL's READ COMMITTED isolation level normally gives each SQL statement a snapshot of data committed before that statement begins. Therefore, a transaction that remains open can see a newly committed update in a later SELECT statement under this isolation level.
+
+However, the transaction sequence in this experiment was not fully confirmed. The message indicating that no transaction was in progress suggests that Session A may already have ended its transaction before the COMMIT attempt. Consequently, the screenshots alone are insufficient to claim that the experiment conclusively demonstrated the visibility of a concurrent commit within an ongoing transaction.
+
+### 5. Evidence
+
+- `Create-test-record-in-Session-B.png` — creation or verification of the test membership plan.
+- `Start-Transaction-A.png` — Session A transaction setup.
+- `Start-run-Transaction-A.png` — additional Session A execution evidence.
+- `Update-the-record-in-Session-B.png` — successful update and commit in Session B.
+- `Read-the-record-again-in-Session-A.png` — query showing the test plan with a price of 3500.00.
+- `Read-the-record-again-in-Session-A-commit.png` — additional Session A query and transaction feedback.
+
+### 6. Conclusion
+
+The update and commit in Session B were successful, and the test plan was shown with the updated price of 3500.00. The transaction isolation behavior itself remains inconclusive because the screenshots do not establish the exact ordering of the reads and commit across the two sessions.
+
+A controlled rerun is needed to demonstrate conclusively how READ COMMITTED handles a concurrent update.
