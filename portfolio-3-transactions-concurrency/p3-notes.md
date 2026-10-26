@@ -8,7 +8,7 @@
 
 ### 1. Objective
 
-The objective of this experiment was to demonstrate how PostgreSQL transactions save database changes using the `COMMIT` command.
+The objective was to demonstrate how PostgreSQL transactions save database changes using the `COMMIT` command.
 
 ### 2. Procedure
 
@@ -42,9 +42,9 @@ COMMIT;
 
 ### 4. Results
 
-The transaction executed successfully in Neon PostgreSQL. The interface showed the three transaction statements: `BEGIN`, `INSERT 1`, and `COMMIT`.
+The transaction executed successfully. Neon displayed the statements `BEGIN`, `INSERT 1`, and `COMMIT`.
 
-The subsequent verification query returned one matching record with the following values:
+The verification query returned one matching record:
 
 | Field | Verified value |
 |---|---|
@@ -53,26 +53,113 @@ The subsequent verification query returned one matching record with the followin
 | `duration_days` | 30 |
 | `price` | 5000.00 |
 
-The verification query confirmed that the inserted record remained available after the transaction was committed.
+The record remained available after the transaction was committed.
 
 ### 5. Discussion
 
-The experiment demonstrated the purpose of the `COMMIT` command in PostgreSQL. A transaction groups database operations into a unit of work, and committing the transaction makes its changes permanent under normal transaction processing.
+The experiment demonstrated how `COMMIT` saves changes made within a transaction. The separate verification query confirmed that the inserted membership plan persisted after the transaction completed.
 
-The separate verification query provided evidence that the membership plan had been saved successfully. The `RETURNING` clause also made it possible to inspect the inserted record immediately.
+The `RETURNING` clause also allowed the inserted record to be inspected immediately.
 
 ### 6. Evidence
 
-The following screenshots provide supporting evidence:
-
-- `Run-transaction.png` — shows the successful execution of `BEGIN`, `INSERT`, and `COMMIT`.
-- `Verify-committed-record.png` — shows the record returned by the verification query.
+- `Run-transaction.png` — successful execution of the transaction statements.
+- `Verify-committed-record.png` — verification of the committed membership plan.
 
 ### 7. Conclusion
 
-The transaction commit experiment was successful. PostgreSQL accepted the insertion and commit operations, and a separate query confirmed that the membership plan remained in the database. This demonstrates how transactions can be used to save database changes reliably.
+The transaction commit experiment was successful. PostgreSQL accepted the insertion and commit operations, and the subsequent query confirmed that the membership plan remained in the database.
 
+---
 
+## Experiment 2: Transaction Rollback
+
+### 1. Objective
+
+The objective was to demonstrate how PostgreSQL reverses uncommitted database changes using the `ROLLBACK` command.
+
+### 2. Procedure
+
+The experiment was performed using the following steps:
+
+1. Started a transaction using `BEGIN`.
+2. Inserted a fictional membership plan named `P3 Rollback Test Plan 2026`.
+3. Used `RETURNING` to inspect the inserted record.
+4. Executed `ROLLBACK` instead of `COMMIT`.
+5. Queried the database to check whether the test plan remained.
+6. Queried the database again to verify that the previously committed plan remained available.
+
+### 3. SQL Implementation
+
+```sql
+BEGIN;
+
+INSERT INTO membership_plans (
+    plan_name,
+    duration_days,
+    price
+)
+VALUES (
+    'P3 Rollback Test Plan 2026',
+    7,
+    1500.00
+)
+RETURNING plan_id, plan_name, duration_days, price;
+
+ROLLBACK;
+```
+
+### 4. Results
+
+The rollback script executed successfully. Neon displayed the statements `BEGIN`, `INSERT 1`, and `ROLLBACK`.
+
+The verification queries produced the following results:
+
+| Test | Expected result | Observed result |
+|---|---|---|
+| Verify rolled-back plan | Zero rows | Zero rows |
+| Verify committed plan | One row | One row |
+
+The query for `P3 Rollback Test Plan 2026` returned no rows, confirming that the insertion was undone.
+
+The query for `P3 Commit Test Plan 2026` returned the existing record with these values:
+
+| Field | Verified value |
+|---|---|
+| `plan_id` | 2 |
+| `plan_name` | P3 Commit Test Plan 2026 |
+| `duration_days` | 30 |
+| `price` | 5000.00 |
+
+### 5. Discussion
+
+The experiment demonstrated that `ROLLBACK` cancels changes made within an uncommitted transaction. Although the `INSERT` statement executed successfully and returned a record during the transaction, the subsequent rollback prevented that insertion from remaining in the database.
+
+The previously committed membership plan was unaffected. This illustrates the difference between committing and rolling back a transaction.
+
+### 6. Evidence
+
+- `Run-rollback-experiment-2.png` — successful execution of `BEGIN`, `INSERT 1`, and `ROLLBACK`.
+- `Verify-rollback.png` — verification query showing no matching row for the rolled-back plan.
+- `Verify-committed-record-remains.png` — confirmation that the previously committed plan remained available.
+
+### 7. Conclusion
+
+The rollback experiment was successful. PostgreSQL reversed the uncommitted insertion, and the test plan was absent from the database after rollback. The previously committed membership plan remained available.
+
+The experiment demonstrated that `ROLLBACK` can undo uncommitted changes while preserving changes committed in an earlier transaction.
+
+---
+
+## Overall Progress
+
+The following transaction concepts have been demonstrated:
+
+1. **COMMIT:** Saves changes made within a transaction.
+2. **ROLLBACK:** Reverses uncommitted changes.
+3. **Verification:** Uses subsequent queries to confirm the resulting database state.
+
+**Next experiment:** Transaction Consistency and Constraint Enforcement. This will investigate how PostgreSQL constraints protect the integrity of data during database operations.
 ## Experiment 3: Transaction Consistency and Constraint Enforcement
 
 ### 1. Objective
