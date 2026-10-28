@@ -326,3 +326,37 @@ However, the transaction sequence in this experiment was not fully confirmed. Th
 The update and commit in Session B were successful, and the test plan was shown with the updated price of 3500.00. The transaction isolation behavior itself remains inconclusive because the screenshots do not establish the exact ordering of the reads and commit across the two sessions.
 
 A controlled rerun is needed to demonstrate conclusively how READ COMMITTED handles a concurrent update.
+
+### Experiment 5: Concurrent Transactions and READ COMMITTED Isolation
+
+**Objective:** To observe how PostgreSQL handles concurrent transactions when one session updates a record and another session reads it.
+
+**Test record:** Membership plan `P3 Isolation Test Plan 2026` (`plan_id = 6`).
+
+**Isolation level:** `READ COMMITTED` in Session A.
+
+#### Procedure and observations
+
+1. Session A began a transaction using `BEGIN ISOLATION LEVEL READ COMMITTED` and queried the membership plan. The price was `3500.00`.
+2. Session B began a transaction and updated the plan price to `4000.00`. The update remained uncommitted.
+3. Session A queried the plan while Session B's update was uncommitted. Session A continued to see the previously committed price of `3500.00`.
+4. Session B committed its transaction.
+5. Session A reran the `SELECT` query and observed the updated price of `4000.00`. Session A remained in an open transaction.
+
+#### Results
+
+| Observation | Price |
+|---|---:|
+| Session A before Session B committed | 3500.00 |
+| Session B after its update | 4000.00 |
+| Session A after Session B committed and the query was rerun | 4000.00 |
+
+#### Analysis
+
+The experiment demonstrates that `READ COMMITTED` prevents Session A from reading Session B's uncommitted changes. Once Session B commits, a subsequent query in Session A can see the newly committed value, even though Session A's transaction has not ended.
+
+This behavior helps maintain data consistency while allowing concurrent database activity. It also illustrates that, under `READ COMMITTED`, separate queries within the same transaction may return different values when other transactions commit changes between those queries.
+
+**Conclusion:** The experiment successfully demonstrated PostgreSQL's `READ COMMITTED` behavior during concurrent transactions.
+
+**Evidence:** Screenshots showing Session A's initial result, Session B's update and committed status, and Session A's subsequent query result.
