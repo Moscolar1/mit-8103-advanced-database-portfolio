@@ -327,6 +327,40 @@ The update and commit in Session B were successful, and the test plan was shown 
 
 A controlled rerun is needed to demonstrate conclusively how READ COMMITTED handles a concurrent update.
 
+### Experiment 4 Retest: Preventing Dirty Reads
+
+**Objective:** To test whether one database session can read changes made by another session before those changes are committed.
+
+**Isolation level:** `READ COMMITTED`.
+
+**Test record:** `P3 Isolation Test Plan 2026`, with `plan_id = 6`.
+
+#### Procedure
+
+1. Session A began a transaction and retrieved the membership plan's current price of `4000.00`.
+2. Session B began a separate transaction and updated the price to `4500.00` without committing.
+3. Session A reran the `SELECT` query while Session B's update was uncommitted.
+4. Session A continued to return `4000.00`, rather than the uncommitted value of `4500.00`.
+5. Session B's update was rolled back, and a subsequent query in Session A returned `4000.00`.
+
+#### Results
+
+| Test stage | Observed price |
+|---|---:|
+| Initial committed value | 4000.00 |
+| Session B's uncommitted update | 4500.00 |
+| Session A's query during the uncommitted update | 4000.00 |
+| Session A's query after the rollback | 4000.00 |
+
+#### Analysis
+
+Session A did not see Session B's uncommitted update. This demonstrates that PostgreSQL's `READ COMMITTED` isolation level prevents dirty reads. After the update was rolled back, the original committed value remained `4000.00`.
+
+**Conclusion:** The experiment demonstrated that uncommitted changes in one transaction are not visible to another transaction operating under `READ COMMITTED`.
+
+**Evidence:** Screenshots of the initial query, Session B's update, Session A's query during the uncommitted update, and the subsequent price check.
+
+
 ### Experiment 5: Concurrent Transactions and READ COMMITTED Isolation
 
 **Objective:** To observe how PostgreSQL handles concurrent transactions when one session updates a record and another session reads it.
