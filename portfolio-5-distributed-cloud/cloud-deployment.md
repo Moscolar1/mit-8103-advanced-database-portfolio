@@ -28,7 +28,7 @@ The PostgreSQL schema was previously created and verified.
 **Database version:** MongoDB 8.0.36  
 **Cluster tier:** Free  
 **Cloud provider:** AWS  
-**Region configuration:** One region
+**Region configuration:** AWS Frankfurt (eu-central-1)
 
 The cluster was created successfully, and the current client IP address was added through Network Access.
 
